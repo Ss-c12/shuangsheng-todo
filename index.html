@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>双生待办 ♡ 小粉 & 小桃</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+/* ===================== 主题变量 ===================== */
+:root{
+  --bg1:#FFF0F6; --bg2:#FFE3EF; --bg3:#FDE7F3;
+  --pink:#FF8FBE; --pink-bright:#FFB7D5; --pink-light:#FFD9E8;
+  --cream:#FFFAFC; --lavender:#C9A7EB; --mint:#A8E6CF;
+  --yellow:#FFE29A; --coral:#FF6B8A;
+  --text:#6B4A5B; --text-sub:#A98DA0;
+  --card-bg:#FFFFFF; --card-border:rgba(255,143,190,.25);
+  --shadow:0 8px 24px rgba(255,143,190,.18);
+  --shadow-hover:0 12px 30px rgba(255,143,190,.30);
+  --mint-soft:#E9F8F1; --expired-soft:#FFE9EE;
+  --input-bg:#FFF6FA; --page-max:720px;
+  --font:"ZCOOL KuaiLe","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+/* 夜间粉色星空模式 */
+[data-theme="dark"]{
+  --bg1:#241733; --bg2:#3a2150; --bg3:#2a1a3a;
+  --pink:#FF8FBE; --pink-bright:#FFB7D5; --pink-light:#FFC8E0;
+  --cream:#3a2747; --lavender:#C9A7EB; --mint:#7FD9B0;
+  --yellow:#FFE29A; --coral:#FF6B8A;
+  --text:#FFE3F1; --text-sub:#D9B8D0;
+  --card-bg:#3a2747; --card-border:rgba(255,143,190,.35);
+  --shadow:0 8px 24px rgba(255,143,190,.22);
+  --shadow-hover:0 12px 30px rgba(255,143,190,.35);
+  --mint-soft:#2c3a33; --expired-soft:#4a2733;
+  --input-bg:#46294f;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font);
+  color:var(--text);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+  background-attachment:fixed;
+  min-height:100vh;
+  transition:background .4s ease,color .4s ease;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+/* 夜间小星星 */
+[data-theme="dark"] body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 70% 20%, #ffd9e8 50%, transparent 51%),
+    radial-gradient(2px 2px at 40% 70%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 85% 60%, #c9a7eb 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 55% 85%, #fff 50%, transparent 51%);
+  opacity:.5;
+  animation:twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle{0%,100%{opacity:.35}50%{opacity:.7}}
+
+/* ===================== 飘落装饰 ===================== */
+#petals{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;}
+.petal{position:absolute;top:-40px;font-size:18px;opacity:.85;animation:fall linear infinite;}
+@keyframes fall{
+  0%{transform:translateY(-40px) rotate(0deg) translateX(0);opacity:0;}
+  10%{opacity:.9;}
+  100%{transform:translateY(105vh) rotate(360deg) translateX(40px);opacity:.2;}
+}
+
+/* ===================== 容器 ===================== */
+.wrap{position:relative;z-index:2;max-width:var(--page-max);margin:0 auto;padding:18px 16px 60px;}
+.glass{background:rgba(255,255,255,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+
+/* ===================== ① 顶部标题 ===================== */
+header{text-align:center;padding:14px 0 6px;position:relative;}
+.title-row{display:flex;align-items:center;justify-content:center;gap:10px;}
+.girl{width:96px;height:auto;flex:0 0 auto;filter:drop-shadow(0 6px 10px rgba(255,143,190,.3));}
+.girl-left{animation:floatY 4s ease-in-out infinite;}
+.girl-right{animation:floatY 4.4s ease-in-out infinite;}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+h1{
+  font-size:40px;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--pink),var(--lavender));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 2px 0 rgba(255,255,255,.4);
+}
+.subtitle{font-size:15px;color:var(--text-sub);margin-top:2px;}
+/* 女孩动画 */
+.tails{transform-box:fill-box;transform-origin:top center;animation:sway 3.2s ease-in-out infinite;}
+.tails-r{animation-delay:.4s;animation-direction:reverse;}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.eyes{transform-box:fill-box;transform-origin:center;animation:blink 4.5s infinite;}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+
+/* ===================== 提醒横幅 ===================== */
+.banner{
+  display:none;margin:10px 0;padding:12px 16px;border-radius:18px;
+  background:linear-gradient(135deg,var(--yellow),var(--pink-light));
+  color:var(--text);font-size:14px;text-align:center;box-shadow:var(--shadow);
+  animation:bannerIn .4s ease;
+}
+.banner.show{display:block;}
+@keyframes bannerIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+/* ===================== ② 输入区 ===================== */
+.card{
+  background:var(--card-bg);border-radius:24px;box-shadow:var(--shadow);
+  padding:20px;margin:14px 0;border:1px solid var(--card-border);
+  transition:box-shadow .25s ease, transform .25s ease, background .4s ease;
+}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field.full{grid-column:1 / -1;}
+label{font-size:13px;color:var(--text-sub);}
+input[type=text],input[type=datetime-local],select{
+  font-family:var(--font);font-size:15px;color:var(--text);
+  background:var(--input-bg);border:2px solid transparent;border-radius:18px;
+  padding:11px 14px;outline:none;transition:all .25s ease;width:100%;
+}
+[data-theme="dark"] input, [data-theme="dark"] select{color:var(--text);}
+input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(255,143,190,.22);}
+.shake{animation:shake .4s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.tip{font-size:12px;color:var(--coral);min-height:16px;margin-top:4px;opacity:0;transition:opacity .2s ease;}
+.tip.show{opacity:1;}
+
+/* 优先级选择 */
+.prio-pick{display:flex;gap:8px;}
+.prio-opt{
+  flex:1;text-align:center;padding:9px 0;border-radius:999px;cursor:pointer;
+  border:2px solid var(--pink-light);background:var(--cream);color:var(--text-sub);
+  font-size:14px;transition:all .2s ease;user-select:none;
+}
+.prio-opt.active{background:linear-gradient(135deg,var(--pink),var(--pink-bright));color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,143,190,.4);}
+
+/* 按钮 */
+.btn{
+  font-family:var(--font);cursor:pointer;border:none;border-radius:999px;
+  transition:transform .15s ease, box-shadow .25s ease, background .3s ease;
+  color:#fff;
+}
+.btn:active{transform:scale(.96);}
+.btn-add{
+  grid-column:1 / -1;margin-top:4px;padding:13px;font-size:17px;
+  background:linear-gradient(135deg,var(--pink),var(--lavender));
+  box-shadow:0 6px 18px rgba(255,143,190,.45);
+}
+.btn-add:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
+
+/* ===================== ③ 统计 + 进度 ===================== */
+.stats{display:flex;justify-content:space-between;gap:8px;text-align:center;font-size:13px;color:var(--text-sub);}
+.stats b{display:block;font-size:22px;color:var(--text);}
+.progress-wrap{margin-top:14px;}
+.progress-top{display:flex;justify-content:space-between;font-size:13px;color:var(--text-sub);margin-bottom:6px;}
+.progress{height:16px;border-radius:999px;background:var(--pink-light);overflow:hidden;position:relative;}
+.progress-fill{
+  height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--pink),var(--lavender));
+  transition:width .5s cubic-bezier(.4,0,.2,1);position:relative;
+}
+.progress-fill::after{
+  content:"";position:absolute;inset:0;border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);
+  background-size:200px 100%;animation:shimmer 1.8s linear infinite;
+}
+@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+
+/* ===================== ④ 筛选 + 搜索 ===================== */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0;}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;}
+.tab{
+  padding:8px 16px;border-radius:999px;cursor:pointer;font-size:14px;
+  background:var(--cream);color:var(--text-sub);border:2px solid transparent;
+  transition:all .2s ease;user-select:none;
+}
+.tab:hover{transform:translateY(-1px);}
+.tab.active{background:linear-gradient(135deg,var(--pink),var(--pink-bright));color:#fff;box-shadow:0 4px 12px rgba(255,143,190,.4);}
+.search{flex:1;min-width:140px;position:relative;}
+.search input{padding-left:34px;}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.6;}
+
+/* ===================== ⑤ 待办列表 ===================== */
+ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
+.todo-card{
+  display:flex;align-items:flex-start;gap:12px;padding:16px 16px 16px 14px;
+  background:var(--card-bg);border-radius:24px;border:1px solid var(--card-border);
+  box-shadow:var(--shadow);position:relative;transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+.todo-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
+.todo-card.soon{border-left:6px solid var(--yellow);}
+.todo-card.expired{border-left:6px solid var(--coral);background:var(--expired-soft);}
+.todo-card.done{opacity:.65;background:var(--mint-soft);transform:scale(.99);}
+/* 入场动画 */
+.todo-card.enter{animation:popIn .45s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:translateY(24px) scale(.9)}to{opacity:1;transform:none}}
+/* 退场动画 */
+.todo-card.leaving{animation:popOut .35s ease forwards;}
+@keyframes popOut{to{opacity:0;transform:scale(.85) translateY(10px)}}
+
+/* 复选框 */
+.check{
+  width:34px;height:34px;border-radius:50%;border:3px solid var(--pink);
+  background:transparent;cursor:pointer;flex:0 0 auto;padding:0;
+  display:grid;place-items:center;transition:all .25s ease;margin-top:2px;
+}
+.check:hover{transform:scale(1.08);}
+.check svg{width:22px;height:22px;}
+.check .tick{fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .3s ease;}
+.todo-card.done .check{background:linear-gradient(135deg,var(--pink),var(--pink-bright));border-color:transparent;}
+.todo-card.done .check .tick{stroke-dashoffset:0;}
+
+.card-body{flex:1;min-width:0;}
+.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+.todo-text{font-size:16px;word-break:break-word;line-height:1.4;}
+.todo-card.done .todo-text{color:var(--text-sub);text-decoration:line-through;}
+.todo-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text-sub);margin-top:6px;}
+.todo-meta .time{font-weight:bold;}
+.todo-meta .time.warn{color:var(--coral);}
+.badge{font-size:12px;padding:2px 10px;border-radius:999px;font-weight:normal;}
+.badge.soon{background:var(--yellow);color:#7a5a00;animation:breathe 1.6s ease-in-out infinite;}
+.badge.expired{background:var(--coral);color:#fff;}
+@keyframes breathe{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,226,154,.6)}50%{opacity:.7;box-shadow:0 0 0 7px rgba(255,226,154,0)}}
+.prio-flag{margin-left:auto;font-size:16px;line-height:1;}
+
+.card-actions{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
+.icon-btn{
+  width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;font-size:15px;
+  background:var(--cream);color:var(--text);transition:all .2s ease;display:grid;place-items:center;
+}
+.icon-btn:hover{transform:translateY(-2px) scale(1.05);background:var(--pink-light);}
+.icon-btn.del:hover{background:var(--coral);color:#fff;}
+
+/* 空状态 */
+.empty{text-align:center;padding:40px 20px;color:var(--text-sub);}
+.empty svg{width:120px;height:auto;margin-bottom:10px;animation:floatY 4s ease-in-out infinite;}
+.empty p{font-size:15px;}
+
+/* ===================== ⑥ 底部 ===================== */
+.footer{margin-top:18px;display:flex;flex-direction:column;gap:12px;align-items:center;}
+.footer-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.btn-ghost{
+  padding:10px 18px;font-size:14px;border-radius:999px;cursor:pointer;
+  background:var(--cream);color:var(--text);border:2px solid var(--pink-light);
+  transition:all .2s ease;font-family:var(--font);
+}
+.btn-ghost:hover{transform:translateY(-2px);background:var(--pink-light);}
+.btn-ghost.danger{border-color:var(--coral);color:var(--coral);}
+.btn-ghost.danger:hover{background:var(--coral);color:#fff;}
+.quote{
+  font-size:14px;color:var(--text-sub);text-align:center;padding:12px 18px;
+  background:var(--card-bg);border-radius:18px;border:1px dashed var(--pink-light);
+  max-width:520px;box-shadow:var(--shadow);
+}
+.topbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px;}
+.topbar .mini{
+  width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;font-size:16px;
+  background:var(--card-bg);color:var(--text);box-shadow:var(--shadow);transition:all .2s ease;
+}
+.topbar .mini:hover{transform:translateY(-2px) scale(1.05);}
+
+/* ===================== 弹窗 ===================== */
+.overlay{
+  position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+  background:rgba(107,74,91,.35);backdrop-filter:blur(3px);padding:20px;
+}
+.overlay.show{display:flex;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--card-bg);border-radius:24px;padding:24px;width:100%;max-width:380px;
+  box-shadow:0 20px 50px rgba(255,143,190,.4);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+  border:1px solid var(--card-border);
+}
+.modal h3{font-size:20px;margin-bottom:14px;color:var(--text);text-align:center;}
+.modal .field{margin-bottom:12px;}
+.modal-actions{display:flex;gap:10px;margin-top:8px;}
+.modal-actions .btn{flex:1;padding:11px;font-size:15px;}
+.btn-ok{background:linear-gradient(135deg,var(--pink),var(--lavender));}
+.btn-ok:hover{transform:translateY(-2px);}
+.btn-cancel{background:var(--pink-light);color:var(--text);}
+.btn-cancel:hover{transform:translateY(-2px);}
+.modal p.msg{text-align:center;font-size:15px;color:var(--text);line-height:1.6;margin-bottom:6px;}
+
+/* 粒子 */
+.particle{position:fixed;pointer-events:none;z-index:60;font-size:16px;will-change:transform,opacity;}
+
+/* ===================== 云同步状态 ===================== */
+.sync-bar{display:flex;justify-content:center;margin:6px 0 2px;}
+.sync-pill{font-size:12px;padding:4px 14px;border-radius:999px;box-shadow:var(--shadow);border:1px solid var(--card-border);}
+.sync-pill.wait{background:var(--cream);color:var(--text-sub);}
+.sync-pill.ok{background:var(--mint-soft);color:#3a9e78;}
+.sync-pill.err{background:var(--expired-soft);color:var(--coral);}
+
+/* ===================== 响应式 ===================== */
+@media (max-width:640px){
+  .girl{width:64px;}
+  h1{font-size:30px;}
+  .input-grid{grid-template-columns:1fr;}
+  .stats b{font-size:18px;}
+}
+@media (max-width:420px){
+  .girl{width:50px;}
+  h1{font-size:26px;}
+  .card{padding:16px;}
+  .card-actions{flex-direction:row;}
+}
+</style>
+</head>
+<body>
+<div id="petals" aria-hidden="true"></div>
+
+<div class="wrap">
+  <!-- 顶部小工具 -->
+  <div class="topbar">
+    <button class="mini" id="syncBtn" title="云同步设置">☁️</button>
+    <button class="mini" id="bellBtn" title="开启到期提醒">🔔</button>
+    <button class="mini" id="muteBtn" title="音效开关">🔊</button>
+    <button class="mini" id="themeBtn" title="切换日夜">🌙</button>
+  </div>
+
+  <!-- ① 标题区 -->
+  <header>
+    <div class="title-row">
+      <div id="girlLeft"></div>
+      <div>
+        <h1>双生待办</h1>
+        <div class="subtitle">小粉 & 小桃陪你一起，把每一天都安排得甜甜的 ♡</div>
+      </div>
+      <div id="girlRight"></div>
+    </div>
+  </header>
+
+  <!-- 提醒横幅 -->
+  <div class="banner" id="banner"></div>
+
+  <!-- ② 输入区 -->
+  <section class="card glass">
+    <div class="input-grid">
+      <div class="field full">
+        <label for="nameInput">待办名称</label>
+        <input type="text" id="nameInput" maxlength="60" placeholder="今天要做点什么呢～（最多 50 字）" autocomplete="off">
+        <div class="tip" id="nameTip"></div>
+      </div>
+      <div class="field">
+        <label for="deadlineInput">截止时间</label>
+        <input type="datetime-local" id="deadlineInput">
+        <div class="tip" id="dateTip"></div>
+      </div>
+      <div class="field">
+        <label>优先级</label>
+        <div class="prio-pick" id="prioPick">
+          <div class="prio-opt" data-p="low">🌿 低</div>
+          <div class="prio-opt active" data-p="mid">🌸 中</div>
+          <div class="prio-opt" data-p="high">🔥 高</div>
+        </div>
+      </div>
+      <button class="btn btn-add" id="addBtn">添加 ♡</button>
+    </div>
+  </section>
+
+  <!-- ③ 统计 + 进度 -->
+  <section class="card">
+    <div class="stats">
+      <div><b id="stAll">0</b>全部</div>
+      <div><b id="stActive">0</b>进行中</div>
+      <div><b id="stDone">0</b>已完成</div>
+      <div><b id="stExpired">0</b>已过期</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-top"><span>完成度 ♡</span><span id="progPct">0%</span></div>
+      <div class="progress"><div class="progress-fill" id="progFill"></div></div>
+    </div>
+  </section>
+
+  <!-- 云同步状态条 -->
+  <div class="sync-bar">
+    <span class="sync-pill wait" id="syncStatus">未连接云同步</span>
+  </div>
+
+  <!-- ④ 筛选 + 搜索 -->
+  <div class="toolbar">
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-f="all">全部</div>
+      <div class="tab" data-f="active">进行中</div>
+      <div class="tab" data-f="soon">即将过期</div>
+      <div class="tab" data-f="expired">已过期</div>
+      <div class="tab" data-f="done">已完成</div>
+    </div>
+    <div class="search">
+      <span class="ic">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索待办关键词…" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- ⑤ 列表 -->
+  <ul class="list" id="list"></ul>
+
+  <!-- ⑥ 底部 -->
+  <div class="footer">
+    <div class="footer-actions">
+      <button class="btn-ghost" id="clearDoneBtn">🧹 清空已完成</button>
+      <button class="btn-ghost danger" id="clearAllBtn">🗑️ 一键清除</button>
+    </div>
+    <div class="quote" id="quote"></div>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== 常量 ===================== */
+  const STORAGE_KEY = "shuangsheng_todo_list";
+  const THEME_KEY = "shuangsheng_theme";
+  const MUTE_KEY = "shuangsheng_muted";
+  const PRIORITIES = {low:"低", mid:"中", high:"高"};
+
+  const $ = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+
+  /* ===================== 状态 ===================== */
+  let todos = [];
+  let filter = "all";
+  let keyword = "";
+  let pickPrio = "mid";
+  let muted = false;
+  let knownExpired = new Set();   // 已通知过的过期任务
+
+  /* ===================== 工具函数 ===================== */
+  const uid = () => "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      todos = raw ? JSON.parse(raw) : [];
+      if(!Array.isArray(todos)) todos = [];
+    }catch(e){ todos = []; }
+  }
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)); }catch(e){}
+  }
+
+  // 计算状态：done / expired / soon / normal
+  function getStatus(t){
+    if(t.done) return "done";
+    const dl = new Date(t.deadline).getTime();
+    if(isNaN(dl)) return "normal";
+    if(dl <= Date.now()) return "expired";
+    if(dl - Date.now() <= 24*3600*1000) return "soon";
+    return "normal";
+  }
+
+  // 时间文案
+  function timeText(t){
+    const dl = new Date(t.deadline).getTime();
+    if(isNaN(dl)) return "未设时间";
+    const now = Date.now();
+    if(dl <= now){
+      const over = now - dl;
+      const d = Math.floor(over/86400000);
+      if(d > 0) return `已超时 ${d} 天`;
+      return `已超时 ${Math.floor(over/3600000)} 小时`;
+    }
+    const diff = dl - now;
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    if(diff <= 24*3600*1000) return `仅剩 ${h} 小时 ${m} 分`;
+    return `还剩 ${d} 天 ${h} 小时`;
+  }
+
+  // 排序：未完成在前(截止近的优先)，已完成按完成时间倒序
+  function sortTodos(list){
+    return list.slice().sort((a,b)=>{
+      if(a.done !== b.done) return a.done ? 1 : -1;
+      if(!a.done){
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      }
+      return (b.completedAt||0) - (a.completedAt||0);
+    });
+  }
+
+  /* ===================== 插画（内联 SVG 女孩） ===================== */
+  function girlSVG(type){
+    if(type === "peach"){
+      // 小桃：温柔、抱爱心、举 ✓
+      return `<svg class="girl girl-right" viewBox="0 0 130 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pg-h" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFB7D5"/><stop offset="1" stop-color="#FF8FBE"/>
+          </linearGradient>
+          <linearGradient id="pg-d" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFE3F1"/><stop offset="1" stop-color="#FFC8E0"/>
+          </linearGradient>
+        </defs>
+        <g class="float">
+          <g class="tails">
+            <path d="M30 70 Q5 110 22 150 Q30 120 40 95 Z" fill="url(#pg-h)"/>
+            <path d="M100 70 Q125 110 108 150 Q100 120 90 95 Z" fill="url(#pg-h)"/>
+          </g>
+          <ellipse cx="65" cy="150" rx="26" ry="30" fill="url(#pg-d)"/>
+          <circle cx="65" cy="62" r="40" fill="#FFE3D3"/>
+          <path d="M25 60 Q25 18 65 16 Q105 18 105 60 Q90 38 65 40 Q40 38 25 60 Z" fill="url(#pg-h)"/>
+          <path d="M40 50 Q50 38 62 46" fill="none" stroke="#FF8FBE" stroke-width="3" stroke-linecap="round"/>
+          <path d="M90 50 Q80 38 68 46" fill="none" stroke="#FF8FBE" stroke-width="3" stroke-linecap="round"/>
+          <path d="M50 18 l8 -10 l8 10 l8 -8 l8 8" fill="none" stroke="#FF8FBE" stroke-width="4" stroke-linejoin="round"/>
+          <g class="eyes">
+            <ellipse cx="52" cy="64" rx="5" ry="7" fill="#5a3a4a"/>
+            <ellipse cx="78" cy="64" rx="5" ry="7" fill="#5a3a4a"/>
+            <circle cx="54" cy="61" r="2" fill="#fff"/>
+            <circle cx="80" cy="61" r="2" fill="#fff"/>
+          </g>
+          <ellipse cx="45" cy="76" rx="6" ry="4" fill="#FF9DBE" opacity=".6"/>
+          <ellipse cx="85" cy="76" rx="6" ry="4" fill="#FF9DBE" opacity=".6"/>
+          <path d="M58 80 Q65 86 72 80" fill="none" stroke="#C76B8E" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M65 100 l-9 11 a4 4 0 0 0 7 5 l5 -7 l5 7 a4 4 0 0 0 7 -5 Z" fill="#FF6B8A" stroke="#fff" stroke-width="1.5"/>
+        </g>
+      </svg>`;
+    }
+    // 小粉：元气、眨眼、双马尾摆动
+    return `<svg class="girl girl-left" viewBox="0 0 130 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pk-h" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FF8FBE"/><stop offset="1" stop-color="#FF6B8A"/>
+        </linearGradient>
+        <linearGradient id="pk-d" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FFB7D5"/><stop offset="1" stop-color="#FF8FBE"/>
+        </linearGradient>
+      </defs>
+      <g class="float">
+        <g class="tails">
+          <path d="M28 68 Q0 112 20 156 Q30 122 42 92 Z" fill="url(#pk-h)"/>
+          <path d="M102 68 Q130 112 110 156 Q100 122 88 92 Z" fill="url(#pk-h)" class="tails-r"/>
+        </g>
+        <ellipse cx="65" cy="150" rx="25" ry="30" fill="url(#pk-d)"/>
+        <circle cx="65" cy="62" r="40" fill="#FFE3D3"/>
+        <path d="M25 60 Q25 16 65 14 Q105 16 105 60 Q90 36 65 38 Q40 36 25 60 Z" fill="url(#pk-h)"/>
+        <path d="M38 48 Q50 34 64 44" fill="none" stroke="#FF6B8A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M92 48 Q80 34 66 44" fill="none" stroke="#FF6B8A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M48 16 l9 -11 l9 11 l9 -9 l9 9" fill="none" stroke="#FF6B8A" stroke-width="4" stroke-linejoin="round"/>
+        <g class="eyes">
+          <ellipse cx="52" cy="64" rx="5.5" ry="7.5" fill="#5a3a4a"/>
+          <ellipse cx="78" cy="64" rx="5.5" ry="7.5" fill="#5a3a4a"/>
+          <circle cx="54" cy="61" r="2.2" fill="#fff"/>
+          <circle cx="80" cy="61" r="2.2" fill="#fff"/>
+        </g>
+        <ellipse cx="44" cy="77" rx="6.5" ry="4" fill="#FF9DBE" opacity=".65"/>
+        <ellipse cx="86" cy="77" rx="6.5" ry="4" fill="#FF9DBE" opacity=".65"/>
+        <path d="M57 81 Q65 89 73 81" fill="none" stroke="#C76B8E" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M40 120 q25 14 50 0" fill="none" stroke="#FFE3D3" stroke-width="3"/>
+      </g>
+    </svg>`;
+  }
+
+  /* ===================== 渲染：插画 / 横幅 / 统计 / 列表 ===================== */
+  function renderGirls(){
+    $("#girlLeft").innerHTML = girlSVG("pink");
+    $("#girlRight").innerHTML = girlSVG("peach");
+  }
+
+  function renderBanner(){
+    const soon = todos.filter(t=>!t.done && getStatus(t)==="soon").length;
+    const exp = todos.filter(t=>!t.done && getStatus(t)==="expired").length;
+    const b = $("#banner");
+    if(soon+exp === 0){ b.classList.remove("show"); return; }
+    let msg;
+    if(exp>0 && soon>0) msg = `小粉提醒你：有 ${exp} 件事已过期、${soon} 件事快要到期啦～快去完成吧！(๑•̀ㅂ•́)و✧`;
+    else if(exp>0) msg = `小桃提醒你：有 ${exp} 件事已经过期了哦，别让它们溜走～(｡•́︿•̀｡)`;
+    else msg = `小粉提醒你：有 ${soon} 件事快要到期啦～快去完成吧！(๑•̀ㅂ•́)و✧`;
+    b.textContent = msg;
+    b.classList.add("show");
+  }
+
+  function renderStats(){
+    const all = todos.length;
+    const active = todos.filter(t=>!t.done).length;
+    const done = todos.filter(t=>t.done).length;
+    const exp = todos.filter(t=>!t.done && getStatus(t)==="expired").length;
+    $("#stAll").textContent = all;
+    $("#stActive").textContent = active;
+    $("#stDone").textContent = done;
+    $("#stExpired").textContent = exp;
+    const pct = all ? Math.round(done/all*100) : 0;
+    $("#progFill").style.width = pct + "%";
+    $("#progPct").textContent = pct + "%";
+  }
+
+  function cardHTML(t){
+    const st = getStatus(t);
+    const flag = t.priority==="high" ? "🔥" : (t.priority==="low" ? "🍃" : "");
+    let badge = "";
+    if(st==="soon") badge = `<span class="badge soon">⏰ 即将过期</span>`;
+    else if(st==="expired") badge = `<span class="badge expired">⚠️ 已过期</span>`;
+    const timeCls = (st==="expired") ? "time warn" : "time";
+    const dl = new Date(t.deadline);
+    const dlStr = isNaN(dl) ? "" : `${dl.getMonth()+1}月${dl.getDate()}日 ${String(dl.getHours()).padStart(2,"0")}:${String(dl.getMinutes()).padStart(2,"0")}`;
+    return `<li class="todo-card ${st} ${t.done?"done":""}" data-id="${t.id}">
+      <button class="check" aria-label="完成切换">
+        <svg viewBox="0 0 24 24"><path class="tick" d="M5 12 L10 17 L19 7"/></svg>
+      </button>
+      <div class="card-body">
+        <div class="card-top">${badge}${flag?`<span class="prio-flag">${flag}</span>`:""}</div>
+        <div class="todo-text">${escapeHTML(t.text)}</div>
+        <div class="todo-meta">
+          <span class="${timeCls}">${timeText(t)}</span>
+          ${dlStr?`<span>📅 ${dlStr}</span>`:""}
+          <span>优先级：${PRIORITIES[t.priority]||"中"}</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="icon-btn edit" title="编辑">✏️</button>
+        <button class="icon-btn del" title="删除">🗑️</button>
+      </div>
+    </li>`;
+  }
+
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function renderList(enterId){
+    const list = $("#list");
+    let view = todos;
+    if(keyword){
+      const k = keyword.toLowerCase();
+      view = view.filter(t=>t.text.toLowerCase().includes(k));
+    }
+    switch(filter){
+      case "active": view = view.filter(t=>!t.done); break;
+      case "soon": view = view.filter(t=>!t.done && getStatus(t)==="soon"); break;
+      case "expired": view = view.filter(t=>!t.done && getStatus(t)==="expired"); break;
+      case "done": view = view.filter(t=>t.done); break;
+    }
+    view = sortTodos(view);
+
+    if(view.length === 0){
+      list.innerHTML = `<div class="empty">
+        ${girlSVG("pink")}
+        <p>${todos.length===0 ? "今天也是元气满满的一天呢～快来添加第一条待办吧 ♡" : "这个分类下还没有待办哦～"}</p>
+      </div>`;
+      return;
+    }
+    list.innerHTML = view.map(cardHTML).join("");
+    if(enterId){
+      const el = list.querySelector(`[data-id="${enterId}"]`);
+      if(el) el.classList.add("enter");
+    }
+  }
+
+  function renderAll(enterId){
+    renderStats();
+    renderBanner();
+    renderList(enterId);
+  }
+
+  /* ===================== 添加 ===================== */
+  function showTip(el, msg){
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(()=>el.classList.remove("show"), 2500);
+  }
+
+  function addTodo(){
+    const nameEl = $("#nameInput");
+    const dateEl = $("#deadlineInput");
+    const nameTip = $("#nameTip");
+    const dateTip = $("#dateTip");
+
+    let name = nameEl.value;
+    if(name.trim().length === 0){
+      nameEl.classList.add("shake");
+      setTimeout(()=>nameEl.classList.remove("shake"), 420);
+      showTip(nameTip, "待办名称不能为空哦～");
+      nameEl.focus();
+      return;
+    }
+    if(name.length > 50){
+      name = name.slice(0,50);
+      nameEl.value = name;
+      showTip(nameTip, "名称过长，已自动截断到 50 字 ♡");
+    }
+    if(!dateEl.value){
+      dateEl.classList.add("shake");
+      setTimeout(()=>dateEl.classList.remove("shake"), 420);
+      showTip(dateTip, "请选择截止时间呀～");
+      dateEl.focus();
+      return;
+    }
+
+    const t = {
+      id: uid(),
+      text: name.trim(),
+      deadline: dateEl.value,
+      priority: pickPrio,
+      done: false,
+      createdAt: Date.now(),
+      completedAt: 0
+    };
+    todos.push(t);
+    t.ut = Date.now();
+    persist();
+    nameEl.value = "";
+    dateEl.value = "";
+    setPrio("mid");
+    renderAll(t.id);
+  }
+
+  /* ===================== 完成切换 + 粒子 ===================== */
+  function toggleDone(id, cardEl){
+    const t = todos.find(x=>x.id===id);
+    if(!t) return;
+    t.done = !t.done;
+    t.completedAt = t.done ? Date.now() : 0;
+    t.ut = Date.now();
+    persist();
+    if(t.done){
+      burstParticles(cardEl.querySelector(".check"));
+      playDing();
+    }
+    renderAll();
+  }
+
+  function burstParticles(anchor){
+    if(!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    const cx = r.left + r.width/2;
+    const cy = r.top + r.height/2;
+    const icons = ["💖","✨","🌸","⭐","💕"];
+    for(let i=0;i<10;i++){
+      const p = document.createElement("div");
+      p.className = "particle";
+      p.textContent = icons[i % icons.length];
+      p.style.left = cx + "px";
+      p.style.top = cy + "px";
+      document.body.appendChild(p);
+      const ang = (Math.PI*2/10)*i + Math.random()*0.4;
+      const dist = 50 + Math.random()*40;
+      const dx = Math.cos(ang)*dist;
+      const dy = Math.sin(ang)*dist - 20;
+      p.animate([
+        {transform:"translate(-50%,-50%) scale(.4)", opacity:1},
+        {transform:`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.1)`, opacity:0}
+      ], {duration:700+Math.random()*300, easing:"cubic-bezier(.2,.7,.3,1)"})
+       .onfinish = () => p.remove();
+    }
+  }
+
+  /* ===================== 音效（Web Audio） ===================== */
+  let audioCtx = null;
+  function playDing(){
+    if(muted) return;
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state === "suspended") audioCtx.resume();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(880, audioCtx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime+0.12);
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.4);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime+0.42);
+    }catch(e){}
+  }
+
+  /* ===================== 弹窗系统 ===================== */
+  function openModal(html){
+    $("#modalBox").innerHTML = html;
+    $("#overlay").classList.add("show");
+  }
+  function closeModal(){ $("#overlay").classList.remove("show"); }
+
+  // 编辑
+  function openEdit(id){
+    const t = todos.find(x=>x.id===id);
+    if(!t) return;
+    const opt = p => `<option value="${p}" ${t.priority===p?"selected":""}>${PRIORITIES[p]}</option>`;
+    openModal(`
+      <h3>✏️ 编辑待办</h3>
+      <div class="field"><label>名称</label><input type="text" id="editText" maxlength="60" value="${escapeHTML(t.text)}"></div>
+      <div class="field"><label>截止时间</label><input type="datetime-local" id="editDeadline" value="${t.deadline}"></div>
+      <div class="field"><label>优先级</label><select id="editPrio">${opt("low")}${opt("mid")}${opt("high")}</select></div>
+      <div class="tip" id="editTip"></div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" data-act="cancel">取消</button>
+        <button class="btn btn-ok" data-act="save" data-id="${id}">保存</button>
+      </div>
+    `);
+    setTimeout(()=>$("#editText").focus(), 50);
+  }
+
+  function saveEdit(id){
+    const t = todos.find(x=>x.id===id);
+    if(!t) return;
+    const text = $("#editText").value.trim();
+    const dl = $("#editDeadline").value;
+    if(text.length === 0){ showTip($("#editTip"), "名称不能为空哦～"); $("#editText").focus(); return; }
+    if(!dl){ showTip($("#editTip"), "请选择截止时间呀～"); return; }
+    t.text = text;
+    t.deadline = dl;
+    t.priority = $("#editPrio").value;
+    t.ut = Date.now();
+    persist();
+    closeModal();
+    renderAll();
+  }
+
+  // 删除确认
+  function openDelete(id, mode){
+    if(mode==="done"){
+      openModal(`
+        <h3>🧹 清空已完成</h3>
+        <p class="msg">确定要丢掉所有「已完成」的待办吗？<br>(｡•́︿•̀｡)</p>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" data-act="cancel">再想想</button>
+          <button class="btn btn-ok" data-act="clearDone">确定清空</button>
+        </div>`);
+      return;
+    }
+    if(mode==="all"){
+      openModal(`
+        <h3>🗑️ 一键清除</h3>
+        <p class="msg">确定要删除<b>全部</b>待办吗？此操作无法撤销哦～<br>(´；ω；｀)</p>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" data-act="cancel">取消</button>
+          <button class="btn btn-ok" data-act="clearAll">狠心删除</button>
+        </div>`);
+      return;
+    }
+    const t = todos.find(x=>x.id===id);
+    if(!t) return;
+    openModal(`
+      <h3>🗑️ 删除待办</h3>
+      <p class="msg">确定要丢掉这条待办吗？<br>「${escapeHTML(t.text)}」<br>(｡•́︿•̀｡)</p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" data-act="cancel">取消</button>
+        <button class="btn btn-ok" data-act="delOne" data-id="${id}">确定丢掉</button>
+      </div>`);
+  }
+
+  /* ===================== 优先级选择 ===================== */
+  function setPrio(p){
+    pickPrio = p;
+    $$("#prioPick .prio-opt").forEach(o=>o.classList.toggle("active", o.dataset.p===p));
+  }
+
+  /* ===================== 每日一句 ===================== */
+  const QUOTES = [
+    "今天的你超棒的！",
+    "慢慢来，比较快 ♡",
+    "小粉和小桃都在为你加油哦～",
+    "完成一件小事，也是前进一大步！",
+    "元气满满，没有什么是搞不定的 (๑•̀ㅂ•́)و",
+    "累了就休息一下，待办不会跑掉～",
+    "你已经比昨天的自己更厉害啦！",
+    "把烦恼一个个划掉，超有成就感吧 ♡",
+    "温柔地对待自己，也要认真完成任务哦",
+    "今天也要和双生姐妹一起闪闪发光 ✨",
+    "别着急，星星会等你的。",
+    "小桃说：做完的事都值得骄傲！"
+  ];
+  function showQuote(){
+    $("#quote").textContent = "💌 " + QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  }
+
+  /* ===================== 飘落装饰 ===================== */
+  function spawnPetals(){
+    const box = $("#petals");
+    const icons = ["🌸","💕","⭐","🍥","🌟"];
+    for(let i=0;i<16;i++){
+      const s = document.createElement("span");
+      s.className = "petal";
+      s.textContent = icons[i % icons.length];
+      s.style.left = Math.random()*100 + "vw";
+      s.style.fontSize = (14 + Math.random()*12) + "px";
+      s.style.animationDuration = (9 + Math.random()*8) + "s";
+      s.style.animationDelay = (-Math.random()*12) + "s";
+      box.appendChild(s);
+    }
+  }
+
+  /* ===================== 通知 ===================== */
+  function requestNotify(){
+    if(!("Notification" in window)) return;
+    if(Notification.permission === "default"){
+      Notification.requestPermission().catch(()=>{});
+    }
+  }
+  function checkNotify(notify){
+    const nowExp = todos.filter(t=>!t.done && getStatus(t)==="expired");
+    if(notify && "Notification" in window && Notification.permission === "granted"){
+      nowExp.forEach(t=>{
+        if(!knownExpired.has(t.id)){
+          knownExpired.add(t.id);
+          try{
+            new Notification("双生待办提醒 ♡", {body:`「${t.text}」已经过期啦，快去处理吧～`});
+          }catch(e){}
+        }
+      });
+    }else{
+      // 仅同步集合，不弹通知（用于首次加载）
+      nowExp.forEach(t=>knownExpired.add(t.id));
+    }
+    // 已完成的从集合移除，便于未来再次提醒
+    const valid = new Set(nowExp.map(t=>t.id));
+    knownExpired.forEach(id=>{ if(!valid.has(id)) knownExpired.delete(id); });
+  }
+
+  /* ===================== 主题 / 静音 ===================== */
+  function applyTheme(){
+    const dark = localStorage.getItem(THEME_KEY) === "dark";
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    $("#themeBtn").textContent = dark ? "☀️" : "🌙";
+  }
+  function applyMute(){
+    muted = localStorage.getItem(MUTE_KEY) === "1";
+    $("#muteBtn").textContent = muted ? "🔇" : "🔊";
+  }
+
+  /* ===================== 事件绑定 ===================== */
+  function bind(){
+    $("#addBtn").addEventListener("click", addTodo);
+    $("#nameInput").addEventListener("keydown", e=>{ if(e.key==="Enter") addTodo(); });
+    $("#deadlineInput").addEventListener("keydown", e=>{ if(e.key==="Enter") addTodo(); });
+
+    // 优先级
+    $("#prioPick").addEventListener("click", e=>{
+      const o = e.target.closest(".prio-opt");
+      if(o) setPrio(o.dataset.p);
+    });
+
+    // 列表委托
+    $("#list").addEventListener("click", e=>{
+      const card = e.target.closest(".todo-card");
+      if(!card) return;
+      const id = card.dataset.id;
+      if(e.target.closest(".check")) toggleDone(id, card);
+      else if(e.target.closest(".edit")) openEdit(id);
+      else if(e.target.closest(".del")) openDelete(id);
+    });
+
+    // 筛选
+    $("#tabs").addEventListener("click", e=>{
+      const tab = e.target.closest(".tab");
+      if(!tab) return;
+      filter = tab.dataset.f;
+      $$("#tabs .tab").forEach(t=>t.classList.toggle("active", t===tab));
+      renderList();
+    });
+
+    // 搜索
+    $("#searchInput").addEventListener("input", e=>{
+      keyword = e.target.value.trim();
+      renderList();
+    });
+
+    // 底部按钮
+    $("#clearDoneBtn").addEventListener("click", ()=>openDelete(null,"done"));
+    $("#clearAllBtn").addEventListener("click", ()=>openDelete(null,"all"));
+
+    // 弹窗按钮委托
+    $("#overlay").addEventListener("click", e=>{
+      if(e.target === $("#overlay")){ closeModal(); return; } // 点遮罩关闭
+      const btn = e.target.closest("[data-act]");
+      if(!btn) return;
+      const act = btn.dataset.act;
+      if(act==="cancel") closeModal();
+      else if(act==="save") saveEdit(btn.dataset.id);
+      else if(act==="delOne"){ deleteOne(btn.dataset.id); }
+      else if(act==="clearDone"){ todos = todos.filter(t=>!t.done); persist(); closeModal(); renderAll(); }
+      else if(act==="clearAll"){ todos = []; knownExpired.clear(); persist(); closeModal(); renderAll(); }
+      else if(act==="connect"){ doConnect(); }
+      else if(act==="disconnect"){ doDisconnect(); closeModal(); }
+    });
+
+    // 顶部小工具
+    $("#themeBtn").addEventListener("click", ()=>{
+      const dark = document.documentElement.getAttribute("data-theme")==="dark";
+      localStorage.setItem(THEME_KEY, dark ? "light" : "dark");
+      applyTheme();
+    });
+    $("#muteBtn").addEventListener("click", ()=>{
+      muted = !muted;
+      localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
+      applyMute();
+    });
+    $("#bellBtn").addEventListener("click", ()=>{
+      requestNotify();
+      if("Notification" in window && Notification.permission==="granted"){
+        new Notification("双生待办 ♡", {body:"到期提醒已开启，小粉会准时叫你哦～"});
+      }
+    });
+    $("#syncBtn").addEventListener("click", openSyncModal);
+
+    // 全局键盘
+    document.addEventListener("keydown", e=>{
+      if(e.key==="Escape" && $("#overlay").classList.contains("show")) closeModal();
+      if(e.key==="Enter" && $("#overlay").classList.contains("show")){
+        const saveBtn = $("#overlay .btn-ok");
+        if(saveBtn && saveBtn.dataset.act==="save") saveEdit(saveBtn.dataset.id);
+      }
+    });
+  }
+
+  function deleteOne(id){
+    const card = $(`#list [data-id="${id}"]`);
+    const finish = ()=>{
+      todos = todos.filter(t=>t.id!==id);
+      knownExpired.delete(id);
+      persist();
+      closeModal();
+      renderAll();
+    };
+    if(card){
+      card.classList.add("leaving");
+      card.addEventListener("animationend", finish, {once:true});
+    }else finish();
+  }
+
+  /* ===================== 云同步（GitHub Gist） ===================== */
+  const SYNC_KEY = "shuangsheng_sync";
+  const GIST_FILE = "shuangsheng_todo.json";
+  let sync = {enabled:false, gistId:"", token:""};
+  let localRev = 0;       // 本机列表版本时间戳
+  let lastPushAt = 0;     // 最近一次成功推送的时间戳（用于区分回声）
+  let pollTimer = null;
+
+  function loadSync(){
+    try{
+      const r = localStorage.getItem(SYNC_KEY);
+      if(r){ const o = JSON.parse(r); sync = {enabled:!!o.enabled, gistId:o.gistId||"", token:o.token||""}; }
+    }catch(e){}
+  }
+  function saveSync(){
+    try{ localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); }catch(e){}
+  }
+  function timeNow(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+  }
+  function setSyncStatus(text, ok){
+    const el = $("#syncStatus");
+    if(el){ el.textContent = text; el.className = "sync-pill " + (ok===true?"ok":ok===false?"err":"wait"); }
+  }
+
+  // 本地保存 + 推送远端
+  function persist(){
+    save();
+    if(sync.enabled) pushToGist();
+  }
+
+  async function gistGet(){
+    const url = "https://api.github.com/gists/" + sync.gistId;
+    const headers = {};
+    if(sync.token) headers["Authorization"] = "token " + sync.token;
+    const res = await fetch(url, {headers});
+    if(!res.ok) throw new Error("读取失败(" + res.status + ")");
+    const data = await res.json();
+    const file = data.files && data.files[GIST_FILE];
+    if(!file || !file.content) return {updatedAt:0, todos:[]};
+    try{ return JSON.parse(file.content); }catch(e){ return {updatedAt:0, todos:[]}; }
+  }
+
+  async function gistPut(payload){
+    const isNew = !sync.gistId;
+    const url = isNew ? "https://api.github.com/gists"
+                      : "https://api.github.com/gists/" + sync.gistId;
+    const headers = {"Content-Type":"application/json"};
+    if(sync.token) headers["Authorization"] = "token " + sync.token;
+    const body = JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(payload)}}, public:false});
+    const res = await fetch(url, {method: isNew?"POST":"PATCH", headers, body});
+    if(!res.ok) throw new Error("写入失败(" + res.status + ")");
+    const data = await res.json();
+    if(isNew && data.id){ sync.gistId = data.id; saveSync(); }
+  }
+
+  async function pushToGist(){
+    if(!sync.enabled || !sync.token) return;
+    try{
+      const payload = {updatedAt: Date.now(), todos};
+      localRev = payload.updatedAt;
+      lastPushAt = payload.updatedAt;
+      await gistPut(payload);
+      setSyncStatus("已同步 ✓ " + timeNow(), true);
+    }catch(e){ setSyncStatus("同步失败：" + e.message, false); }
+  }
+
+  async function pullFromGist(){
+    if(!sync.enabled || !sync.gistId) return;
+    try{
+      const remote = await gistGet();
+      const ru = remote.updatedAt || 0;
+      if(ru === lastPushAt){ localRev = Math.max(localRev, ru); return; } // 自己的回声
+      if(ru > localRev){ // 远端更新，整表采用（后写覆盖）
+        todos = Array.isArray(remote.todos) ? remote.todos : [];
+        localRev = ru;
+        save();
+        renderAll();
+        setSyncStatus("已同步 ✓ " + timeNow(), true);
+      }else{ // 本机更新更晚，回推一次
+        pushToGist();
+      }
+    }catch(e){ setSyncStatus("同步失败：" + e.message, false); }
+  }
+
+  function startPolling(){ if(pollTimer) return; pollTimer = setInterval(pullFromGist, 6000); }
+  function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+
+  // 首次连接：合并两端数据，避免丢本地
+  async function connectSync(){
+    try{
+      let remote = {updatedAt:0, todos:[]};
+      if(sync.gistId){
+        try{ remote = await gistGet(); }catch(e){ /* 新 gist 或读取失败，继续 */ }
+      }
+      const map = new Map();
+      const stamp = t => t.ut || t.createdAt || 0;
+      (remote.todos||[]).forEach(t=>map.set(t.id, t));
+      todos.forEach(t=>{
+        const ex = map.get(t.id);
+        if(!ex) map.set(t.id, t);
+        else if(stamp(t) > stamp(ex)) map.set(t.id, t);
+      });
+      todos = Array.from(map.values());
+      localRev = Date.now();
+      lastPushAt = localRev;
+      await gistPut({updatedAt:localRev, todos});
+      sync.enabled = true; saveSync();
+      setSyncStatus("已连接 ✓ " + timeNow(), true);
+      startPolling();
+      renderAll();
+    }catch(e){ setSyncStatus("连接失败：" + e.message, false); }
+  }
+
+  async function doConnect(){
+    const gid = $("#syncGist").value.trim();
+    const tok = $("#syncToken").value.trim();
+    if(!tok){ showTip($("#syncTip"), "请填写 GitHub 令牌(PAT)哦～"); return; }
+    sync.gistId = gid;
+    sync.token = tok;
+    saveSync();
+    closeModal();
+    setSyncStatus("连接中…", null);
+    await connectSync();
+  }
+
+  function doDisconnect(){
+    sync.enabled = false; saveSync();
+    stopPolling();
+    setSyncStatus("未连接云同步", null);
+  }
+
+  function openSyncModal(){
+    openModal(`
+      <h3>☁️ 云同步设置</h3>
+      <div class="field"><label>Gist ID（留空则自动新建）</label>
+        <input type="text" id="syncGist" value="${escapeHTML(sync.gistId)}" placeholder="例如 a1b2c3d4e5f6"></div>
+      <div class="field"><label>GitHub 令牌 PAT（仅需 gist 权限）</label>
+        <input type="password" id="syncToken" value="${escapeHTML(sync.token)}" placeholder="ghp_xxx 或 github_pat_xxx" autocomplete="off"></div>
+      <div class="tip" id="syncTip"></div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" data-act="cancel">取消</button>
+        ${sync.enabled ? '<button class="btn btn-cancel" data-act="disconnect">断开</button>' : ''}
+        <button class="btn btn-ok" data-act="connect">连接</button>
+      </div>
+      <p class="msg" style="font-size:12px;color:var(--text-sub);margin-top:10px;">
+        在 github.com → Settings → Developer settings → Personal access tokens 生成仅勾选 <b>gist</b> 的令牌。<br>
+        手机与电脑都填同一个 Gist ID + 令牌即可实时互相同步 ♡
+      </p>
+    `);
+  }
+
+  /* ===================== 初始化 ===================== */
+  function init(){
+    load();
+    loadSync();
+    applyTheme();
+    applyMute();
+    renderGirls();
+    spawnPetals();
+    showQuote();
+    bind();
+    renderAll();
+    setPrio("mid");
+    if(sync.enabled){
+      setSyncStatus("连接中…", null);
+      connectSync();
+    }
+    // 每 30 秒刷新状态
+    setInterval(()=>{ renderAll(); checkNotify(true); }, 30000);
+    // 首次加载仅同步集合，不弹通知
+    checkNotify(false);
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+</body>
+</html>
