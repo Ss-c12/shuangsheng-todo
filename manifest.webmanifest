@@ -1,0 +1,17 @@
+{
+  "name": "双生待办 ♡ 小粉 & 小桃",
+  "short_name": "双生待办",
+  "description": "小粉和小桃的双生待办清单",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFE3EF",
+  "theme_color": "#FF8FBE",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>双生待办 ♡ 小粉 & 小桃</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FF8FBE">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="双生待办">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
@@ -1414,6 +1421,14 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();
+</script>
+<script>
+/* PWA：注册 Service Worker（离线可用） */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => console.log("SW 注册失败:", err));
+  });
+}
 </script>
 </body>
 </html>
