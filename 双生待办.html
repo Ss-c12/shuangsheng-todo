@@ -489,12 +489,19 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   function load(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
-      todos = raw ? JSON.parse(raw) : [];
-      if(!Array.isArray(todos)) todos = [];
-    }catch(e){ todos = []; }
+      if(!raw){ todos = []; tomb = new Set(); }
+      else{
+        const p = JSON.parse(raw);
+        if(Array.isArray(p)){ todos = p; tomb = new Set(); }            // 兼容旧版纯数组
+        else{
+          todos = Array.isArray(p.todos) ? p.todos : [];
+          tomb = new Set(Array.isArray(p.tomb) ? p.tomb : []);
+        }
+      }
+    }catch(e){ todos = []; tomb = new Set(); }
   }
   function save(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)); }catch(e){}
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({todos, tomb:Array.from(tomb)})); }catch(e){}
   }
 
   // 计算状态：done / expired / soon / normal
@@ -1187,8 +1194,8 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       if(act==="cancel") closeModal();
       else if(act==="save") saveEdit(btn.dataset.id);
       else if(act==="delOne"){ deleteOne(btn.dataset.id); }
-      else if(act==="clearDone"){ todos = todos.filter(t=>!t.done); persist(); closeModal(); renderAll(); }
-      else if(act==="clearAll"){ todos = []; knownExpired.clear(); persist(); closeModal(); renderAll(); }
+      else if(act==="clearDone"){ todos.filter(t=>t.done).forEach(t=>tomb.add(t.id)); todos = todos.filter(t=>!t.done); persist(); closeModal(); renderAll(); }
+      else if(act==="clearAll"){ todos.forEach(t=>tomb.add(t.id)); todos = []; knownExpired.clear(); persist(); closeModal(); renderAll(); }
       else if(act==="connect"){ doConnect(); }
       else if(act==="disconnect"){ doDisconnect(); closeModal(); }
     });
@@ -1225,6 +1232,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   function deleteOne(id){
     const card = $(`#list [data-id="${id}"]`);
     const finish = ()=>{
+      tomb.add(id);
       todos = todos.filter(t=>t.id!==id);
       knownExpired.delete(id);
       persist();
@@ -1241,8 +1249,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   const SYNC_KEY = "shuangsheng_sync";
   const GIST_FILE = "shuangsheng_todo.json";
   let sync = {enabled:false, gistId:"", token:""};
-  let localRev = 0;       // 本机列表版本时间戳
-  let lastPushAt = 0;     // 最近一次成功推送的时间戳（用于区分回声）
+  let tomb = new Set();   // 已删除待办的墓碑集合，用于跨设备传播"删除"
   let pollTimer = null;
 
   function loadSync(){
@@ -1263,10 +1270,10 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     if(el){ el.textContent = text; el.className = "sync-pill " + (ok===true?"ok":ok===false?"err":"wait"); }
   }
 
-  // 本地保存 + 推送远端
+  // 本地保存 + 合并推送远端（安全：按 id 并集，绝不整表覆盖）
   function persist(){
     save();
-    if(sync.enabled) pushToGist();
+    if(sync.enabled) syncMerge();
   }
 
   async function gistGet(){
@@ -1277,8 +1284,11 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     if(!res.ok) throw new Error("读取失败(" + res.status + ")");
     const data = await res.json();
     const file = data.files && data.files[GIST_FILE];
-    if(!file || !file.content) return {updatedAt:0, todos:[]};
-    try{ return JSON.parse(file.content); }catch(e){ return {updatedAt:0, todos:[]}; }
+    if(!file || !file.content) return {updatedAt:0, todos:[], tomb:[]};
+    try{
+      const j = JSON.parse(file.content);
+      return {updatedAt:j.updatedAt||0, todos:Array.isArray(j.todos)?j.todos:[], tomb:Array.isArray(j.tomb)?j.tomb:[]};
+    }catch(e){ return {updatedAt:0, todos:[], tomb:[]}; }
   }
 
   async function gistPut(payload){
@@ -1294,60 +1304,47 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     if(isNew && data.id){ sync.gistId = data.id; saveSync(); }
   }
 
-  async function pushToGist(){
+  // 按 id 做并集合并：冲突取较新版本；删除通过墓碑(tomb)集合传播
+  function mergeTodos(localTodos, localTomb, remoteTodos, remoteTomb){
+    const tomb = new Set([...(localTomb||[]), ...(remoteTomb||[])]);
+    const stamp = t => t.ut || t.completedAt || t.createdAt || 0;
+    const map = new Map();
+    const put = arr => (arr||[]).forEach(t=>{
+      if(!t || !t.id || tomb.has(t.id)) return;
+      const ex = map.get(t.id);
+      if(!ex || stamp(t) > stamp(ex)) map.set(t.id, t);
+    });
+    put(remoteTodos); put(localTodos);
+    return {todos: Array.from(map.values()), tomb};
+  }
+
+  // 核心同步：拉远端→与本机合并→写回；幂等，任何一端都不会丢失数据
+  async function syncMerge(){
     if(!sync.enabled || !sync.token) return;
     try{
-      const payload = {updatedAt: Date.now(), todos};
-      localRev = payload.updatedAt;
-      lastPushAt = payload.updatedAt;
-      await gistPut(payload);
+      const remote = await gistGet();
+      const merged = mergeTodos(todos, Array.from(tomb), remote.todos||[], remote.tomb||[]);
+      todos = merged.todos;
+      tomb = new Set(merged.tomb);
+      const rev = Date.now();
+      await gistPut({updatedAt:rev, todos, tomb:Array.from(tomb)});
+      save();
+      renderAll();
       setSyncStatus("已同步 ✓ " + timeNow(), true);
     }catch(e){ setSyncStatus("同步失败：" + e.message, false); }
   }
 
-  async function pullFromGist(){
-    if(!sync.enabled || !sync.gistId) return;
-    try{
-      const remote = await gistGet();
-      const ru = remote.updatedAt || 0;
-      if(ru === lastPushAt){ localRev = Math.max(localRev, ru); return; } // 自己的回声
-      if(ru > localRev){ // 远端更新，整表采用（后写覆盖）
-        todos = Array.isArray(remote.todos) ? remote.todos : [];
-        localRev = ru;
-        save();
-        renderAll();
-        setSyncStatus("已同步 ✓ " + timeNow(), true);
-      }else{ // 本机更新更晚，回推一次
-        pushToGist();
-      }
-    }catch(e){ setSyncStatus("同步失败：" + e.message, false); }
-  }
-
-  function startPolling(){ if(pollTimer) return; pollTimer = setInterval(pullFromGist, 6000); }
+  function startPolling(){ if(pollTimer) return; pollTimer = setInterval(syncMerge, 6000); }
   function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
 
-  // 首次连接：合并两端数据，避免丢本地
+  // 首次连接
   async function connectSync(){
     try{
-      let remote = {updatedAt:0, todos:[]};
-      if(sync.gistId){
-        try{ remote = await gistGet(); }catch(e){ /* 新 gist 或读取失败，继续 */ }
-      }
-      const map = new Map();
-      const stamp = t => t.ut || t.createdAt || 0;
-      (remote.todos||[]).forEach(t=>map.set(t.id, t));
-      todos.forEach(t=>{
-        const ex = map.get(t.id);
-        if(!ex) map.set(t.id, t);
-        else if(stamp(t) > stamp(ex)) map.set(t.id, t);
-      });
-      todos = Array.from(map.values());
-      localRev = Date.now();
-      lastPushAt = localRev;
-      await gistPut({updatedAt:localRev, todos});
       sync.enabled = true; saveSync();
-      setSyncStatus("已连接 ✓ " + timeNow(), true);
+      setSyncStatus("连接中…", null);
+      await syncMerge();
       startPolling();
+      setSyncStatus("已连接 ✓ " + timeNow(), true);
       renderAll();
     }catch(e){ setSyncStatus("连接失败：" + e.message, false); }
   }
