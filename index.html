@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>双生待办 ♡ 小粉 & 小桃</title>
+<title>SscTodo</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FF8FBE">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="双生待办">
+<meta name="apple-mobile-web-app-title" content="SscTodo">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
@@ -375,7 +375,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     <div class="title-row">
       <div id="girlLeft"></div>
       <div>
-        <h1>双生待办</h1>
+        <h1>SscTodo</h1>
         <div class="subtitle">小粉 & 小桃陪你一起，把每一天都安排得甜甜的 ♡</div>
       </div>
       <div id="girlRight"></div>
@@ -1127,7 +1127,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
         if(!knownExpired.has(t.id)){
           knownExpired.add(t.id);
           try{
-            new Notification("双生待办提醒 ♡", {body:`「${t.text}」已经过期啦，快去处理吧～`});
+            new Notification("SscTodo 提醒 ♡", {body:`「${t.text}」已经过期啦，快去处理吧～`});
           }catch(e){}
         }
       });
@@ -1221,7 +1221,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     $("#bellBtn").addEventListener("click", ()=>{
       requestNotify();
       if("Notification" in window && Notification.permission==="granted"){
-        new Notification("双生待办 ♡", {body:"到期提醒已开启，小粉会准时叫你哦～"});
+        new Notification("SscTodo ♡", {body:"到期提醒已开启，小粉会准时叫你哦～"});
       }
     });
     $("#syncBtn").addEventListener("click", openSyncModal);

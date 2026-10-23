@@ -1,6 +1,6 @@
 {
-  "name": "双生待办 ♡ 小粉 & 小桃",
-  "short_name": "双生待办",
+  "name": "SscTodo",
+  "short_name": "SscTodo",
   "description": "小粉和小桃的双生待办清单",
   "lang": "zh-CN",
   "start_url": "./index.html",
