@@ -218,6 +218,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
 .todo-text{font-size:16px;word-break:break-word;line-height:1.4;}
 .todo-card.done .todo-text{color:var(--text-sub);text-decoration:line-through;}
 .todo-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text-sub);margin-top:6px;}
+.todo-meta .ctime{opacity:.85;}
 .todo-meta .time{font-weight:bold;}
 .todo-meta .time.warn{color:var(--coral);}
 .badge{font-size:12px;padding:2px 10px;border-radius:999px;font-weight:normal;}
@@ -261,6 +262,47 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   background:var(--card-bg);color:var(--text);box-shadow:var(--shadow);transition:all .2s ease;
 }
 .topbar .mini:hover{transform:translateY(-2px) scale(1.05);}
+
+/* ===================== 名言卡（大） ===================== */
+.quote-hero{
+  position:relative;margin:16px auto 4px;max-width:640px;text-align:center;
+  background:var(--card-bg);
+  background:linear-gradient(135deg,
+    color-mix(in srgb, var(--pink) 12%, var(--card-bg)) 0%,
+    color-mix(in srgb, var(--card-bg) 55%, var(--pink-light)) 55%,
+    color-mix(in srgb, var(--lavender) 18%, var(--card-bg)) 100%);
+  border:1px solid var(--card-border);border-radius:24px;
+  box-shadow:0 10px 30px rgba(255,143,190,.22);
+  padding:26px 34px 20px;overflow:hidden;
+}
+.quote-hero::before{
+  content:"\201C";position:absolute;top:-16px;left:16px;font-size:92px;line-height:1;
+  font-family:Georgia,"Times New Roman",serif;color:rgba(255,143,190,.30);pointer-events:none;
+}
+.quote-hero::after{
+  content:"\201D";position:absolute;bottom:-34px;right:16px;font-size:92px;line-height:1;
+  font-family:Georgia,"Times New Roman",serif;color:rgba(201,167,235,.30);pointer-events:none;
+}
+.qh-text{
+  font-size:clamp(19px,3.4vw,26px);font-weight:700;line-height:1.6;color:var(--text);
+  text-shadow:0 1px 0 rgba(255,255,255,.25);
+  transition:opacity .45s ease,transform .45s ease;
+}
+.qh-text.fading{opacity:0;transform:translateY(10px);}
+.qh-author{margin-top:10px;font-size:14px;color:var(--text-sub);transition:opacity .45s ease;}
+.qh-author.fading{opacity:0;}
+.qh-author::before{content:"—— ";}
+.qh-tag{
+  display:inline-block;margin-top:12px;font-size:12px;padding:3px 14px;border-radius:999px;
+  background:var(--pink-light);color:var(--text);box-shadow:var(--shadow);
+  transition:opacity .45s ease;
+}
+.qh-tag.fading{opacity:0;}
+@media (max-width:420px){
+  .quote-hero{padding:20px 18px 16px;}
+  .quote-hero::before{font-size:64px;top:-10px;left:8px;}
+  .quote-hero::after{font-size:64px;bottom:-24px;right:8px;}
+}
 
 /* ===================== 弹窗 ===================== */
 .overlay{
@@ -332,6 +374,13 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       <div id="girlRight"></div>
     </div>
   </header>
+
+  <!-- ①.5 每日名言（大卡，10 秒轮换） -->
+  <section class="quote-hero" id="quoteHero" aria-live="polite">
+    <div class="qh-text" id="qhText"></div>
+    <div class="qh-author" id="qhAuthor"></div>
+    <span class="qh-tag" id="qhTag"></span>
+  </section>
 
   <!-- 提醒横幅 -->
   <div class="banner" id="banner"></div>
@@ -602,6 +651,8 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     const timeCls = (st==="expired") ? "time warn" : "time";
     const dl = new Date(t.deadline);
     const dlStr = isNaN(dl) ? "" : `${dl.getMonth()+1}月${dl.getDate()}日 ${String(dl.getHours()).padStart(2,"0")}:${String(dl.getMinutes()).padStart(2,"0")}`;
+    const ct = new Date(t.createdAt || Date.now());
+    const ctStr = `${ct.getMonth()+1}月${ct.getDate()}日 ${String(ct.getHours()).padStart(2,"0")}:${String(ct.getMinutes()).padStart(2,"0")}`;
     return `<li class="todo-card ${st} ${t.done?"done":""}" data-id="${t.id}">
       <button class="check" aria-label="完成切换">
         <svg viewBox="0 0 24 24"><path class="tick" d="M5 12 L10 17 L19 7"/></svg>
@@ -613,6 +664,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
           <span class="${timeCls}">${timeText(t)}</span>
           ${dlStr?`<span>📅 ${dlStr}</span>`:""}
           <span>优先级：${PRIORITIES[t.priority]||"中"}</span>
+          <span class="ctime">📝 ${ctStr} 创建</span>
         </div>
       </div>
       <div class="card-actions">
@@ -871,6 +923,74 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   ];
   function showQuote(){
     $("#quote").textContent = "💌 " + QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  }
+
+  /* ===================== 名言卡（大，10 秒轮换） ===================== */
+  /* 类型 c：哲学 / 诗与远方 / 奋进 / 爱而不得 / 时间 / 治愈 */
+  const FAMOUS = [
+    {t:"未经审视的人生，不值得过。",a:"苏格拉底",c:"哲学"},
+    {t:"我思故我在。",a:"笛卡尔",c:"哲学"},
+    {t:"知人者智，自知者明。",a:"老子",c:"哲学"},
+    {t:"人不能两次踏进同一条河流。",a:"赫拉克利特",c:"哲学"},
+    {t:"凡是过往，皆为序章。",a:"莎士比亚",c:"哲学"},
+    {t:"存在先于本质。",a:"萨特",c:"哲学"},
+    {t:"世界上只有一种真正的英雄主义，就是认清生活的真相后依然热爱它。",a:"罗曼·罗兰",c:"哲学"},
+    {t:"生活不止眼前的苟且，还有诗和远方。",a:"高晓松",c:"诗与远方"},
+    {t:"面朝大海，春暖花开。",a:"海子",c:"诗与远方"},
+    {t:"你站在桥上看风景，看风景的人在楼上看你。",a:"卞之琳",c:"诗与远方"},
+    {t:"从前的日色变得慢，车，马，邮件都慢，一生只够爱一个人。",a:"木心",c:"诗与远方"},
+    {t:"世界以痛吻我，要我报之以歌。",a:"泰戈尔",c:"诗与远方"},
+    {t:"生如夏花之绚烂，死如秋叶之静美。",a:"泰戈尔",c:"诗与远方"},
+    {t:"愿你的道路漫长，充满奇迹，充满发现。",a:"卡瓦菲斯",c:"诗与远方"},
+    {t:"我们都在阴沟里，但仍有人仰望星空。",a:"王尔德",c:"诗与远方"},
+    {t:"满地都是六便士，他却抬头看见了月亮。",a:"毛姆《月亮与六便士》",c:"诗与远方"},
+    {t:"天行健，君子以自强不息。",a:"《周易》",c:"奋进"},
+    {t:"路漫漫其修远兮，吾将上下而求索。",a:"屈原",c:"奋进"},
+    {t:"业精于勤，荒于嬉；行成于思，毁于随。",a:"韩愈",c:"奋进"},
+    {t:"宝剑锋从磨砺出，梅花香自苦寒来。",a:"《警世贤文》",c:"奋进"},
+    {t:"哪有什么天才，我是把别人喝咖啡的工夫都用在工作上。",a:"鲁迅",c:"奋进"},
+    {t:"星光不问赶路人，时光不负有心人。",a:"佚名",c:"奋进"},
+    {t:"你必须非常努力，才能看起来毫不费力。",a:"佚名",c:"奋进"},
+    {t:"种一棵树最好的时间是十年前，其次是现在。",a:"非洲谚语",c:"奋进"},
+    {t:"不要等待机会，而要创造机会。",a:"培根",c:"奋进"},
+    {t:"山不过来，我就过去。",a:"《古兰经》典故",c:"奋进"},
+    {t:"每一个不曾起舞的日子，都是对生命的辜负。",a:"尼采",c:"奋进"},
+    {t:"曾经沧海难为水，除却巫山不是云。",a:"元稹",c:"爱而不得"},
+    {t:"人生若只如初见，何事秋风悲画扇。",a:"纳兰性德",c:"爱而不得"},
+    {t:"此情可待成追忆，只是当时已惘然。",a:"李商隐",c:"爱而不得"},
+    {t:"玲珑骰子安红豆，入骨相思知不知。",a:"温庭筠",c:"爱而不得"},
+    {t:"山有木兮木有枝，心悦君兮君不知。",a:"《越人歌》",c:"爱而不得"},
+    {t:"我们再也回不去了。",a:"张爱玲《半生缘》",c:"爱而不得"},
+    {t:"于千万人之中遇见你所要遇见的人，于千万年之中，时间的无涯的荒野里，没有早一步，也没有晚一步。",a:"张爱玲",c:"爱而不得"},
+    {t:"我将于茫茫人海中访我唯一灵魂之伴侣，得之，我幸；不得，我命。",a:"徐志摩",c:"爱而不得"},
+    {t:"庭有枇杷树，吾妻死之年所手植也，今已亭亭如盖矣。",a:"归有光",c:"爱而不得"},
+    {t:"逝者如斯夫，不舍昼夜。",a:"孔子",c:"时间"},
+    {t:"盛年不重来，一日难再晨。及时当勉励，岁月不待人。",a:"陶渊明",c:"时间"},
+    {t:"花开堪折直须折，莫待无花空折枝。",a:"《金缕衣》",c:"时间"},
+    {t:"黑发不知勤学早，白首方悔读书迟。",a:"颜真卿",c:"时间"},
+    {t:"明天，又是新的一天。",a:"《飘》",c:"治愈"},
+    {t:"黑夜无论怎样悠长，白昼总会到来。",a:"莎士比亚",c:"治愈"},
+    {t:"冬天来了，春天还会远吗？",a:"雪莱",c:"治愈"},
+    {t:"一切都会过去，而那过去了的，都会成为亲切的怀恋。",a:"普希金",c:"治愈"},
+    {t:"你要做一个不动声色的大人了。不准情绪化，不准偷偷想念，不准回头看。去过自己另外的生活。",a:"村上春树",c:"治愈"},
+    {t:"纵有疾风起，人生不言弃。",a:"瓦莱里",c:"治愈"}
+  ];
+  let heroLast = -1;
+  function showHeroQuote(instant){
+    let i;
+    do { i = Math.floor(Math.random()*FAMOUS.length); } while(FAMOUS.length>1 && i===heroLast);
+    heroLast = i;
+    const q = FAMOUS[i];
+    const txt = $("#qhText"), au = $("#qhAuthor"), tag = $("#qhTag");
+    if(instant){
+      txt.textContent = q.t; au.textContent = q.a; tag.textContent = "「"+q.c+"」";
+      return;
+    }
+    txt.classList.add("fading"); au.classList.add("fading"); tag.classList.add("fading");
+    setTimeout(()=>{
+      txt.textContent = q.t; au.textContent = q.a; tag.textContent = "「"+q.c+"」";
+      txt.classList.remove("fading"); au.classList.remove("fading"); tag.classList.remove("fading");
+    },460);
   }
 
   /* ===================== 飘落装饰 ===================== */
@@ -1189,6 +1309,8 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     renderGirls();
     spawnPetals();
     showQuote();
+    showHeroQuote(true);                 // 打开页面立即随机一条
+    setInterval(showHeroQuote, 10000);   // 每 10 秒换一条
     bind();
     renderAll();
     setPrio("mid");
