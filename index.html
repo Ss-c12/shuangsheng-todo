@@ -244,7 +244,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
 
 /* 空状态 */
 .empty{text-align:center;padding:40px 20px;color:var(--text-sub);}
-.empty svg{width:120px;height:auto;margin-bottom:10px;animation:floatY 4s ease-in-out infinite;}
+.empty .girl{width:120px;animation:floatY 4s ease-in-out infinite;margin-bottom:10px;}
 .empty p{font-size:15px;}
 
 /* ===================== ⑥ 底部 ===================== */
@@ -551,82 +551,18 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     });
   }
 
-  /* ===================== 插画（内联 SVG 女孩） ===================== */
-  function girlSVG(type){
-    if(type === "peach"){
-      // 小桃：温柔、抱爱心、举 ✓
-      return `<svg class="girl girl-right" viewBox="0 0 130 200" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="pg-h" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#FFB7D5"/><stop offset="1" stop-color="#FF8FBE"/>
-          </linearGradient>
-          <linearGradient id="pg-d" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#FFE3F1"/><stop offset="1" stop-color="#FFC8E0"/>
-          </linearGradient>
-        </defs>
-        <g class="float">
-          <g class="tails">
-            <path d="M30 70 Q5 110 22 150 Q30 120 40 95 Z" fill="url(#pg-h)"/>
-            <path d="M100 70 Q125 110 108 150 Q100 120 90 95 Z" fill="url(#pg-h)"/>
-          </g>
-          <ellipse cx="65" cy="150" rx="26" ry="30" fill="url(#pg-d)"/>
-          <circle cx="65" cy="62" r="40" fill="#FFE3D3"/>
-          <path d="M25 60 Q25 18 65 16 Q105 18 105 60 Q90 38 65 40 Q40 38 25 60 Z" fill="url(#pg-h)"/>
-          <path d="M40 50 Q50 38 62 46" fill="none" stroke="#FF8FBE" stroke-width="3" stroke-linecap="round"/>
-          <path d="M90 50 Q80 38 68 46" fill="none" stroke="#FF8FBE" stroke-width="3" stroke-linecap="round"/>
-          <path d="M50 18 l8 -10 l8 10 l8 -8 l8 8" fill="none" stroke="#FF8FBE" stroke-width="4" stroke-linejoin="round"/>
-          <g class="eyes">
-            <ellipse cx="52" cy="64" rx="5" ry="7" fill="#5a3a4a"/>
-            <ellipse cx="78" cy="64" rx="5" ry="7" fill="#5a3a4a"/>
-            <circle cx="54" cy="61" r="2" fill="#fff"/>
-            <circle cx="80" cy="61" r="2" fill="#fff"/>
-          </g>
-          <ellipse cx="45" cy="76" rx="6" ry="4" fill="#FF9DBE" opacity=".6"/>
-          <ellipse cx="85" cy="76" rx="6" ry="4" fill="#FF9DBE" opacity=".6"/>
-          <path d="M58 80 Q65 86 72 80" fill="none" stroke="#C76B8E" stroke-width="2.4" stroke-linecap="round"/>
-          <path d="M65 100 l-9 11 a4 4 0 0 0 7 5 l5 -7 l5 7 a4 4 0 0 0 7 -5 Z" fill="#FF6B8A" stroke="#fff" stroke-width="1.5"/>
-        </g>
-      </svg>`;
-    }
-    // 小粉：元气、眨眼、双马尾摆动
-    return `<svg class="girl girl-left" viewBox="0 0 130 200" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="pk-h" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#FF8FBE"/><stop offset="1" stop-color="#FF6B8A"/>
-        </linearGradient>
-        <linearGradient id="pk-d" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#FFB7D5"/><stop offset="1" stop-color="#FF8FBE"/>
-        </linearGradient>
-      </defs>
-      <g class="float">
-        <g class="tails">
-          <path d="M28 68 Q0 112 20 156 Q30 122 42 92 Z" fill="url(#pk-h)"/>
-          <path d="M102 68 Q130 112 110 156 Q100 122 88 92 Z" fill="url(#pk-h)" class="tails-r"/>
-        </g>
-        <ellipse cx="65" cy="150" rx="25" ry="30" fill="url(#pk-d)"/>
-        <circle cx="65" cy="62" r="40" fill="#FFE3D3"/>
-        <path d="M25 60 Q25 16 65 14 Q105 16 105 60 Q90 36 65 38 Q40 36 25 60 Z" fill="url(#pk-h)"/>
-        <path d="M38 48 Q50 34 64 44" fill="none" stroke="#FF6B8A" stroke-width="3" stroke-linecap="round"/>
-        <path d="M92 48 Q80 34 66 44" fill="none" stroke="#FF6B8A" stroke-width="3" stroke-linecap="round"/>
-        <path d="M48 16 l9 -11 l9 11 l9 -9 l9 9" fill="none" stroke="#FF6B8A" stroke-width="4" stroke-linejoin="round"/>
-        <g class="eyes">
-          <ellipse cx="52" cy="64" rx="5.5" ry="7.5" fill="#5a3a4a"/>
-          <ellipse cx="78" cy="64" rx="5.5" ry="7.5" fill="#5a3a4a"/>
-          <circle cx="54" cy="61" r="2.2" fill="#fff"/>
-          <circle cx="80" cy="61" r="2.2" fill="#fff"/>
-        </g>
-        <ellipse cx="44" cy="77" rx="6.5" ry="4" fill="#FF9DBE" opacity=".65"/>
-        <ellipse cx="86" cy="77" rx="6.5" ry="4" fill="#FF9DBE" opacity=".65"/>
-        <path d="M57 81 Q65 89 73 81" fill="none" stroke="#C76B8E" stroke-width="2.6" stroke-linecap="round"/>
-        <path d="M40 120 q25 14 50 0" fill="none" stroke="#FFE3D3" stroke-width="3"/>
-      </g>
-    </svg>`;
+  /* ===================== 插画（日漫小女孩立绘） ===================== */
+  function girlHTML(type){
+    const src  = type === "peach" ? "girl-peach.png" : "girl-pink.png";
+    const name = type === "peach" ? "小桃" : "小粉";
+    const cls  = type === "peach" ? "girl girl-right" : "girl girl-left";
+    return `<img class="${cls}" src="${src}" alt="${name}" draggable="false">`;
   }
 
   /* ===================== 渲染：插画 / 横幅 / 统计 / 列表 ===================== */
   function renderGirls(){
-    $("#girlLeft").innerHTML = girlSVG("pink");
-    $("#girlRight").innerHTML = girlSVG("peach");
+    $("#girlLeft").innerHTML = girlHTML("pink");
+    $("#girlRight").innerHTML = girlHTML("peach");
   }
 
   function renderBanner(){
@@ -709,7 +645,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
 
     if(view.length === 0){
       list.innerHTML = `<div class="empty">
-        ${girlSVG("pink")}
+        ${girlHTML("pink")}
         <p>${todos.length===0 ? "今天也是元气满满的一天呢～快来添加第一条待办吧 ♡" : "这个分类下还没有待办哦～"}</p>
       </div>`;
       return;

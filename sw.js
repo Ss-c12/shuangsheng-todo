@@ -1,5 +1,5 @@
 /* 双生待办 Service Worker —— 离线缓存 */
-const CACHE = "ss-todo-v3";
+const CACHE = "ss-todo-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,7 +8,9 @@ const ASSETS = [
   "./icon-512.png",
   "./icon-maskable-512.png",
   "./apple-touch-icon.png",
-  "./favicon-32.png"
+  "./favicon-32.png",
+  "./girl-pink.png",
+  "./girl-peach.png"
 ];
 
 self.addEventListener("install", (e) => {
