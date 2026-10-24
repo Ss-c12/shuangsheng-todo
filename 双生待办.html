@@ -1292,9 +1292,10 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       tomb = new Set(merged.tomb);
       // 只有本地合并结果确实比云端多/新才写回，避免两端每轮无脑整表覆盖造成乒乓/互相顶掉
       const changed = !sameTodos(merged.todos, remote.todos||[]) || !sameArr(merged.tomb, remote.tomb||[]);
+      const needsStamp = !remote.ver; // 云端最后是旧版代码写的：主动重写一次盖上版本章，让告警自行消除
       save();
       renderAll();
-      if(changed){
+      if(changed || needsStamp){
         await gistPut({updatedAt:Date.now(), todos, tomb:Array.from(tomb)});
       }
       if(!remote.ver){

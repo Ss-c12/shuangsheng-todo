@@ -1,5 +1,5 @@
 /* 双生待办 Service Worker —— 离线缓存 */
-const CACHE = "ss-todo-v8";
+const CACHE = "ss-todo-v9";
 const ASSETS = [
   "./",
   "./index.html",
