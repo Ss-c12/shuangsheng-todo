@@ -1260,18 +1260,20 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       if(!ex || stamp(t) > stamp(ex)) map.set(t.id, t);
     });
     put(remoteTodos); put(localTodos);
-    return {todos: Array.from(map.values()), tomb};
+    return {todos: Array.from(map.values()), tomb: Array.from(tomb)};
   }
 
   // 判断"本端合并结果"是否比"云端"更新（用于避免每轮无脑整表写回造成两端乒乓覆盖）
   function sameTodos(a, b){
     const key = t => t.id+"|"+(t.ut||0)+"|"+(t.done?1:0)+"|"+(t.completedAt||0);
-    const A = (a||[]).map(key).sort().join(";");
-    const B = (b||[]).map(key).sort().join(";");
+    const A = (Array.isArray(a)?a:[]).map(key).sort().join(";");
+    const B = (Array.isArray(b)?b:[]).map(key).sort().join(";");
     return A === B;
   }
   function sameArr(a, b){
-    return (a||[]).slice().sort().join("|") === (b||[]).slice().sort().join("|");
+    const A = (Array.isArray(a)?a:[]).slice().sort().join("|");
+    const B = (Array.isArray(b)?b:[]).slice().sort().join("|");
+    return A === B;
   }
 
   // 核心同步：拉远端→与本机合并→仅在"合并结果比云端新"时才写回；幂等，任何一端都不会丢失数据
