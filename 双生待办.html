@@ -1242,7 +1242,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   }
 
   async function gistPut(payload){
-    payload.ver = 8; // 同步协议版本：用于识别对端是否旧版代码（旧版无此字段且为整表覆盖行为）
+    payload.ver = 10; // 同步协议版本：v10 起修复 SW 缓存跨域 API 导致读到旧快照的问题
     const isNew = !sync.gistId;
     const url = isNew ? "https://api.github.com/gists"
                       : "https://api.github.com/gists/" + sync.gistId;

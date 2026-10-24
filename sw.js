@@ -1,5 +1,5 @@
 /* 双生待办 Service Worker —— 离线缓存 */
-const CACHE = "ss-todo-v9";
+const CACHE = "ss-todo-v10";
 const ASSETS = [
   "./",
   "./index.html",
@@ -59,18 +59,8 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // 跨域（Google Fonts 等）：cache-first，失败再回退缓存
-  e.respondWith(
-    caches.match(e.request).then(
-      (cached) =>
-        cached ||
-        fetch(e.request)
-          .then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, copy));
-            return res;
-          })
-          .catch(() => cached)
-    )
-  );
+  // 跨域请求（api.github.com 云同步接口、Google Fonts 等）：【绝不拦截、绝不缓存】！
+  // 历史教训：此前对跨域也做 cache-first，导致云端 API 的 GET 响应被存进 SW 缓存，
+  // 之后每次同步都读到旧快照 → 两端互以为对方是旧的 → 反复互相覆盖（乒乓/翻转/连不上）。
+  return;
 });
