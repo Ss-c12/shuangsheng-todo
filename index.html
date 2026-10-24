@@ -1191,6 +1191,8 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   /* ===================== 云同步（GitHub Gist） ===================== */
   const SYNC_KEY = "shuangsheng_sync";
   const GIST_FILE = "shuangsheng_todo.json";
+  // 共享 Gist ID（手机/电脑都连这一个；连接时若留空默认填它，避免误建第二个 Gist）
+  const DEFAULT_GIST_ID = "51446ce1c284feb2b7b19b1078f606ca";
   let sync = {enabled:false, gistId:"", token:""};
   let tomb = new Set();   // 已删除待办的墓碑集合，用于跨设备传播"删除"
   let pollTimer = null;
@@ -1248,17 +1250,24 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   }
 
   // 按 id 做并集合并：冲突取较新版本；删除通过墓碑(tomb)集合传播
+  // 关键修正：墓碑只在本端和对端【都没有】该待办时才生效，
+  // 避免某一端把另一端还活着的待办误删（根治"一端连上另一端就丢失"的振荡）
   function mergeTodos(localTodos, localTomb, remoteTodos, remoteTomb){
-    const tomb = new Set([...(localTomb||[]), ...(remoteTomb||[])]);
+    const localIds  = new Set((localTodos||[]).map(t=>t && t.id));
+    const remoteIds = new Set((remoteTodos||[]).map(t=>t && t.id));
+    const effectiveTomb = new Set();
+    for(const id of [...(localTomb||[]), ...(remoteTomb||[])]){
+      if(!localIds.has(id) && !remoteIds.has(id)) effectiveTomb.add(id);
+    }
     const stamp = t => t.ut || t.completedAt || t.createdAt || 0;
     const map = new Map();
     const put = arr => (arr||[]).forEach(t=>{
-      if(!t || !t.id || tomb.has(t.id)) return;
+      if(!t || !t.id || effectiveTomb.has(t.id)) return;
       const ex = map.get(t.id);
       if(!ex || stamp(t) > stamp(ex)) map.set(t.id, t);
     });
     put(remoteTodos); put(localTodos);
-    return {todos: Array.from(map.values()), tomb};
+    return {todos: Array.from(map.values()), tomb: Array.from(effectiveTomb)};
   }
 
   // 核心同步：拉远端→与本机合并→写回；幂等，任何一端都不会丢失数据
@@ -1296,7 +1305,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     const gid = $("#syncGist").value.trim();
     const tok = $("#syncToken").value.trim();
     if(!tok){ showTip($("#syncTip"), "请填写 GitHub 令牌(PAT)哦～"); return; }
-    sync.gistId = gid;
+    sync.gistId = gid || DEFAULT_GIST_ID;
     sync.token = tok;
     saveSync();
     closeModal();
@@ -1313,8 +1322,8 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   function openSyncModal(){
     openModal(`
       <h3>☁️ 云同步设置</h3>
-      <div class="field"><label>Gist ID（留空则自动新建）</label>
-        <input type="text" id="syncGist" value="${escapeHTML(sync.gistId)}" placeholder="例如 a1b2c3d4e5f6"></div>
+      <div class="field"><label>Gist ID（已默认填好共享 ID，一般无需改动）</label>
+        <input type="text" id="syncGist" value="${escapeHTML(sync.gistId || DEFAULT_GIST_ID)}" placeholder="例如 a1b2c3d4e5f6"></div>
       <div class="field"><label>GitHub 令牌 PAT（仅需 gist 权限）</label>
         <input type="password" id="syncToken" value="${escapeHTML(sync.token)}" placeholder="ghp_xxx 或 github_pat_xxx" autocomplete="off"></div>
       <div class="tip" id="syncTip"></div>
@@ -1325,7 +1334,8 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       </div>
       <p class="msg" style="font-size:12px;color:var(--text-sub);margin-top:10px;">
         在 github.com → Settings → Developer settings → Personal access tokens 生成仅勾选 <b>gist</b> 的令牌。<br>
-        手机与电脑都填同一个 Gist ID + 令牌即可实时互相同步 ♡
+        手机与电脑都填同一个 Gist ID + 令牌即可实时互相同步 ♡<br>
+        <b>注意：</b>Gist ID 已默认填好，不要清空它（清空会新建一个独立的 Gist，导致两端各写各的、永远对不上）。
       </p>
     `);
   }
