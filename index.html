@@ -1250,27 +1250,31 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   }
 
   // 按 id 做并集合并：冲突取较新版本；删除通过墓碑(tomb)集合传播
-  // 关键修正：墓碑只在本端和对端【都没有】该待办时才生效，
-  // 避免某一端把另一端还活着的待办误删（根治"一端连上另一端就丢失"的振荡）
   function mergeTodos(localTodos, localTomb, remoteTodos, remoteTomb){
-    const localIds  = new Set((localTodos||[]).map(t=>t && t.id));
-    const remoteIds = new Set((remoteTodos||[]).map(t=>t && t.id));
-    const effectiveTomb = new Set();
-    for(const id of [...(localTomb||[]), ...(remoteTomb||[])]){
-      if(!localIds.has(id) && !remoteIds.has(id)) effectiveTomb.add(id);
-    }
+    const tomb = new Set([...(localTomb||[]), ...(remoteTomb||[])]);
     const stamp = t => t.ut || t.completedAt || t.createdAt || 0;
     const map = new Map();
     const put = arr => (arr||[]).forEach(t=>{
-      if(!t || !t.id || effectiveTomb.has(t.id)) return;
+      if(!t || !t.id || tomb.has(t.id)) return;
       const ex = map.get(t.id);
       if(!ex || stamp(t) > stamp(ex)) map.set(t.id, t);
     });
     put(remoteTodos); put(localTodos);
-    return {todos: Array.from(map.values()), tomb: Array.from(effectiveTomb)};
+    return {todos: Array.from(map.values()), tomb};
   }
 
-  // 核心同步：拉远端→与本机合并→写回；幂等，任何一端都不会丢失数据
+  // 判断"本端合并结果"是否比"云端"更新（用于避免每轮无脑整表写回造成两端乒乓覆盖）
+  function sameTodos(a, b){
+    const key = t => t.id+"|"+(t.ut||0)+"|"+(t.done?1:0)+"|"+(t.completedAt||0);
+    const A = (a||[]).map(key).sort().join(";");
+    const B = (b||[]).map(key).sort().join(";");
+    return A === B;
+  }
+  function sameArr(a, b){
+    return (a||[]).slice().sort().join("|") === (b||[]).slice().sort().join("|");
+  }
+
+  // 核心同步：拉远端→与本机合并→仅在"合并结果比云端新"时才写回；幂等，任何一端都不会丢失数据
   async function syncMerge(){
     if(!sync.enabled || !sync.token) return;
     try{
@@ -1278,10 +1282,13 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       const merged = mergeTodos(todos, Array.from(tomb), remote.todos||[], remote.tomb||[]);
       todos = merged.todos;
       tomb = new Set(merged.tomb);
-      const rev = Date.now();
-      await gistPut({updatedAt:rev, todos, tomb:Array.from(tomb)});
+      // 只有本地合并结果确实比云端多/新才写回，避免两端每轮无脑整表覆盖造成乒乓/互相顶掉
+      const changed = !sameTodos(merged.todos, remote.todos||[]) || !sameArr(merged.tomb, remote.tomb||[]);
       save();
       renderAll();
+      if(changed){
+        await gistPut({updatedAt:Date.now(), todos, tomb:Array.from(tomb)});
+      }
       setSyncStatus("已同步 ✓ " + timeNow(), true);
     }catch(e){ setSyncStatus("同步失败：" + e.message, false); }
   }
