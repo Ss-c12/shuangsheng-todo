@@ -365,6 +365,7 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   <!-- 顶部小工具 -->
   <div class="topbar">
     <button class="mini" id="syncBtn" title="云同步设置">☁️</button>
+    <button class="mini" id="syncNowBtn" title="立即同步一次">🔄</button>
     <button class="mini" id="bellBtn" title="开启到期提醒">🔔</button>
     <button class="mini" id="muteBtn" title="音效开关">🔊</button>
     <button class="mini" id="themeBtn" title="切换日夜">🌙</button>
@@ -1161,6 +1162,10 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       }
     });
     $("#syncBtn").addEventListener("click", openSyncModal);
+    $("#syncNowBtn").addEventListener("click", ()=>{
+      if(sync.enabled && sync.token){ setSyncStatus("同步中…", null); syncMerge(); }
+      else openSyncModal();
+    });
 
     // 全局键盘
     document.addEventListener("keydown", e=>{
@@ -1232,11 +1237,12 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
     if(!file || !file.content) return {updatedAt:0, todos:[], tomb:[]};
     try{
       const j = JSON.parse(file.content);
-      return {updatedAt:j.updatedAt||0, todos:Array.isArray(j.todos)?j.todos:[], tomb:Array.isArray(j.tomb)?j.tomb:[]};
-    }catch(e){ return {updatedAt:0, todos:[], tomb:[]}; }
+      return {updatedAt:j.updatedAt||0, ver:j.ver||0, todos:Array.isArray(j.todos)?j.todos:[], tomb:Array.isArray(j.tomb)?j.tomb:[]};
+    }catch(e){ return {updatedAt:0, ver:0, todos:[], tomb:[]}; }
   }
 
   async function gistPut(payload){
+    payload.ver = 8; // 同步协议版本：用于识别对端是否旧版代码（旧版无此字段且为整表覆盖行为）
     const isNew = !sync.gistId;
     const url = isNew ? "https://api.github.com/gists"
                       : "https://api.github.com/gists/" + sync.gistId;
@@ -1291,7 +1297,12 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
       if(changed){
         await gistPut({updatedAt:Date.now(), todos, tomb:Array.from(tomb)});
       }
-      setSyncStatus("已同步 ✓ " + timeNow(), true);
+      if(!remote.ver){
+        // 云端最后是旧版代码写的（无版本号 = 整表覆盖行为），它会持续顶掉本端写入
+        setSyncStatus("⚠️ 对端是旧版本，请完全关闭重开两端App", false);
+      } else {
+        setSyncStatus("已同步 ✓ " + timeNow(), true);
+      }
     }catch(e){ setSyncStatus("同步失败：" + e.message, false); }
   }
 
