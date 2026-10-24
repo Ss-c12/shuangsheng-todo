@@ -1422,6 +1422,38 @@ ul.list{list-style:none;display:flex;flex-direction:column;gap:12px;}
   else init();
 })();
 </script>
+<style>
+.install-btn{position:fixed;right:16px;bottom:16px;z-index:999;display:none;align-items:center;gap:6px;
+  padding:10px 18px;border:none;border-radius:999px;cursor:pointer;
+  background:linear-gradient(135deg,var(--pink),var(--coral));color:#fff;
+  font-family:var(--font);font-size:15px;box-shadow:var(--shadow-hover);transition:transform .2s;}
+.install-btn:hover{transform:translateY(-2px);}
+</style>
+<button id="installBtn" class="install-btn" type="button">📲 安装到桌面</button>
+<script>
+/* PWA 安装按钮：捕获安装事件，点击触发原生安装弹窗 */
+(function(){
+  let deferredPrompt = null;
+  const btn = document.getElementById("installBtn");
+  if(!btn) return;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    btn.style.display = "flex";
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    btn.style.display = "none";
+  });
+  btn.addEventListener("click", async () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt = null;
+    btn.style.display = "none";
+  });
+})();
+</script>
 <script>
 /* PWA：注册 Service Worker（离线可用） */
 if("serviceWorker" in navigator){
